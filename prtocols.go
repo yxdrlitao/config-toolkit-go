@@ -2,12 +2,13 @@ package config
 
 import (
 	"bytes"
-	"github.com/fsnotify/fsnotify"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/fsnotify/fsnotify"
 )
 
 type Protocol interface {

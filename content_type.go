@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"encoding/xml"
 	"fmt"
+	"io"
+
 	"github.com/cyfdecyf/bufio"
 	"github.com/go-xweb/log"
 	"golang.org/x/text/encoding/unicode"
 	"golang.org/x/text/transform"
-	"io"
 )
 
 type ContentTypeResolve interface {

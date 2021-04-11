@@ -2,10 +2,11 @@ package config
 
 import (
 	"fmt"
-	"github.com/go-xweb/log"
 	"strconv"
-	"sync"
 	"strings"
+	"sync"
+
+	"github.com/go-xweb/log"
 )
 
 type ConfigGroup interface {
@@ -85,14 +86,13 @@ func (this *GeneralConfigGroup) GetBool(key string) (bool, error) {
 		switch val {
 		case "1", "t", "true", "yes", "y", "on":
 			return true, nil
-		case "0", "f", "false", "no", "n", "off" :
+		case "0", "f", "false", "no", "n", "off":
 			return false, nil
 		}
 	}
 
 	return false, fmt.Errorf("parsing %q: invalid syntax", val)
 }
-
 
 //设置一个属性集合
 func (this *GeneralConfigGroup) PutAll(configs map[string]string) {
