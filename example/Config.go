@@ -1,21 +1,16 @@
 package config
 
 import (
-	"entity"
-	"github.com/mbaight/config-toolkit-go"
-	"io/ioutil"
 	"log"
-	"net"
-	"net/http"
-	"strconv"
-	"strings"
+
+	"github.com/yxdrlitao/config-toolkit-go"
 )
 
 var fileConfigGroup = func() *config.FileConfigGroup {
 	configProfile := config.NewZkConfigProfile(
 		`localhost:2181`,
 		`/config`,
-		version,
+		"1.0.0",
 	)
 
 	zkConfigGroup, err := config.NewZookeeperConfigGroupWithCache(
@@ -34,7 +29,7 @@ var fileConfigGroup = func() *config.FileConfigGroup {
 
 	fileConfigGroup, err := config.NewFileConfigGroup(
 		zkConfigGroup,
-		config.NewFileConfigProfileWithVersion(`UTF8`, config.ContentType_properties, version),
+		config.NewFileConfigProfileWithVersion(`UTF8`, config.ContentType_properties, "1.0.0"),
 		`/etc/application.properties`,
 	)
 
@@ -48,7 +43,6 @@ var fileConfigGroup = func() *config.FileConfigGroup {
 
 	return fileConfigGroup
 }()
-
 
 //根据propertyName获取属性
 func GetConfig(propertyName string) string {

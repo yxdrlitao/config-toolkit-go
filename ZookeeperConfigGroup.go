@@ -1,10 +1,11 @@
 package config
 
 import (
-	"github.com/curator-go/curator"
-	"github.com/samuel/go-zookeeper/zk"
 	"log"
 	"time"
+
+	"github.com/yxdrlitao/curator"
+	"github.com/yxdrlitao/go-zookeeper/zk"
 )
 
 type ZookeeperConfigGroup struct {

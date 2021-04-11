@@ -1,9 +1,10 @@
 package config
 
 import (
-	"github.com/curator-go/curator"
-	"github.com/emirpasic/gods/sets/hashset"
 	"time"
+
+	"github.com/emirpasic/gods/sets/hashset"
+	"github.com/yxdrlitao/curator"
 )
 
 const (

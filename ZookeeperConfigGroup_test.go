@@ -1,10 +1,11 @@
 package config_test
 
 import (
-	"config"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/yxdrlitao/config-toolkit-go"
 )
 
 func TestNewZookeeperConfigGroupWithCache(t *testing.T) {
