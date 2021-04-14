@@ -40,7 +40,7 @@ func NewLocalFileProtocol() (*LocalFileProtocol, error) {
 }
 
 //监听文件变化,重新加载属性列表
-func (this *LocalFileProtocol) Watch(location *FileLocation, fileConfigGroup *FileConfigGroup) error {
+func (p *LocalFileProtocol) Watch(location *FileLocation, fileConfigGroup *FileConfigGroup) error {
 
 	path, err := filepath.Abs(location.file)
 	if err != nil {
@@ -48,7 +48,7 @@ func (this *LocalFileProtocol) Watch(location *FileLocation, fileConfigGroup *Fi
 		return err
 	}
 
-	err = this.watcher.Add(path)
+	err = p.watcher.Add(path)
 	if err != nil {
 		log.Printf("add file watch error:%v file path:%s\n", err, path)
 		return err
@@ -57,13 +57,13 @@ func (this *LocalFileProtocol) Watch(location *FileLocation, fileConfigGroup *Fi
 	go func() {
 		for {
 			select {
-			case event := <-this.watcher.Events:
+			case event := <-p.watcher.Events:
 				log.Printf("accept watch event:%v", event)
 				if event.Op&fsnotify.Write == fsnotify.Write {
 					log.Printf("modified file:%s\n", event.Name)
 					fileConfigGroup.initConfig()
 				}
-			case err := <-this.watcher.Errors:
+			case err := <-p.watcher.Errors:
 				log.Printf("accept watch error:%v\n", err)
 			}
 		}
@@ -80,7 +80,7 @@ func exist(filename string) bool {
 }
 
 //获取文件里面的属性内容
-func (this *LocalFileProtocol) Read(location *FileLocation) ([]byte, error) {
+func (p *LocalFileProtocol) Read(location *FileLocation) ([]byte, error) {
 	path, err := filepath.Abs(location.file)
 	if err != nil {
 		log.Printf("file path error:%v file path:%s\n", err, path)
@@ -101,14 +101,14 @@ func (this *LocalFileProtocol) Read(location *FileLocation) ([]byte, error) {
 	return result, nil
 }
 
-func (this *LocalFileProtocol) Close() error {
-	return this.watcher.Close()
+func (p *LocalFileProtocol) Close() error {
+	return p.watcher.Close()
 }
 
 type HttpProtocol struct{}
 
 //从http接口获取属性内容
-func (this *HttpProtocol) Read(location *FileLocation) ([]byte, error) {
+func (p *HttpProtocol) Read(location *FileLocation) ([]byte, error) {
 	url := location.protocol + `://` + string(bytes.TrimLeft([]byte(location.file), `/`))
 	resp, err := http.Get(url)
 	if err != nil {
@@ -127,10 +127,10 @@ func (this *HttpProtocol) Read(location *FileLocation) ([]byte, error) {
 	return body, nil
 }
 
-func (this *HttpProtocol) Watch(location *FileLocation, fileConfigGroup *FileConfigGroup) error {
+func (p *HttpProtocol) Watch(location *FileLocation, fileConfigGroup *FileConfigGroup) error {
 	return nil
 }
 
-func (this *HttpProtocol) Close() error {
+func (p *HttpProtocol) Close() error {
 	return nil
 }

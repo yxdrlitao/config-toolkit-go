@@ -37,7 +37,7 @@ func bufferReader(data []byte, encoding string) io.Reader {
 }
 
 //从XML内容解析出属性列表
-func (this *PropertiesContentType) resolve(data []byte, encoding string) (map[string]string, error) {
+func (t *PropertiesContentType) resolve(data []byte, encoding string) (map[string]string, error) {
 	result := make(map[string]string, 10)
 	reader := bufio.NewReader(bufferReader(data, encoding))
 	for {
@@ -69,7 +69,7 @@ func (this *PropertiesContentType) resolve(data []byte, encoding string) (map[st
 }
 
 //从ini内容解析出属性列表
-func (this *XmlContentType) resolve(data []byte, encoding string) (map[string]string, error) {
+func (t *XmlContentType) resolve(data []byte, encoding string) (map[string]string, error) {
 	result := make(map[string]string, 10)
 	decoder := xml.NewDecoder(bufferReader(data, encoding))
 	var key string
@@ -97,7 +97,7 @@ func (this *XmlContentType) resolve(data []byte, encoding string) (map[string]st
 	return result, err
 }
 
-func (this *JsonContentType) resolve(data []byte, encoding string) (map[string]string, error) {
+func (t *JsonContentType) resolve(data []byte, encoding string) (map[string]string, error) {
 	return nil, fmt.Errorf("properties with json not implement:%v", encoding)
 }
 

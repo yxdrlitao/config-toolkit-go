@@ -49,7 +49,7 @@ func NewZkConfigProfile(connectStr, rootNode, version string) *ZookeeperConfigPr
 		RootNode:             rootNode,
 		RetryPolicy:          curator.NewExponentialBackoffRetry(time.Second, 3, 15*time.Second),
 		ConsistencyCheck:     true,
-		ConsistencyCheckRate: 1 * time.Second,
+		ConsistencyCheckRate: 10 * time.Second,
 		ConfigProfile: &ConfigProfile{
 			KeyLoadingMode: KeyLoadingMode_ALL,
 			Version:        version,
@@ -58,12 +58,12 @@ func NewZkConfigProfile(connectStr, rootNode, version string) *ZookeeperConfigPr
 	}
 }
 
-func (this *ZookeeperConfigProfile) versionedRootNode() string {
-	if len(this.Version) == 0 {
-		return this.RootNode
+func (z *ZookeeperConfigProfile) versionedRootNode() string {
+	if len(z.Version) == 0 {
+		return z.RootNode
 	}
 
-	return MakePath(this.RootNode, this.Version)
+	return MakePath(z.RootNode, z.Version)
 }
 
 func NewFileConfigProfile(fileEncoding string, contentType int) *FileConfigProfile {

@@ -31,11 +31,11 @@ func NewGeneralConfigGroup(internalConfigGroup ConfigGroup) *GeneralConfigGroup 
 	}
 }
 
-func (this *GeneralConfigGroup) get(key string) string {
-	this.lock.RLock()
-	defer this.lock.RUnlock()
+func (g *GeneralConfigGroup) get(key string) string {
+	g.lock.RLock()
+	defer g.lock.RUnlock()
 
-	value, ok := this.configMap[key]
+	value, ok := g.configMap[key]
 	if !ok {
 		return ``
 	}
@@ -44,28 +44,27 @@ func (this *GeneralConfigGroup) get(key string) string {
 }
 
 //获取string类型的属性
-func (this *GeneralConfigGroup) Get(key string) string {
-
-	value := this.get(key)
+func (g *GeneralConfigGroup) Get(key string) string {
+	value := g.get(key)
 
 	if len(value) > 0 {
 		return value
 	}
 
-	if this.internalConfigGroup == nil {
+	if g.internalConfigGroup == nil {
 		return ``
 	}
 
-	value = this.internalConfigGroup.Get(key)
+	value = g.internalConfigGroup.Get(key)
 
-	this.put(key, value)
+	g.put(key, value)
 
 	return value
 }
 
 //获取int类型的属性
-func (this *GeneralConfigGroup) GetInt(key string) (int, error) {
-	value := this.Get(key)
+func (g *GeneralConfigGroup) GetInt(key string) (int, error) {
+	value := g.Get(key)
 	result, err := strconv.Atoi(value)
 	if err != nil {
 		log.Printf(`config error: name:%s, value:%s`, key, value)
@@ -79,8 +78,8 @@ func (this *GeneralConfigGroup) GetInt(key string) (int, error) {
 // 当属性值为 1, 1.0, t, T, TRUE, true, True, YES, yes, Yes,Y, y, ON, on, On 时,返回true
 // 当属性值为 0, 0.0, f, F, FALSE, false, False, NO, no, No, N,n, OFF, off, Off 时,返回false
 // 否则返回错误
-func (this *GeneralConfigGroup) GetBool(key string) (bool, error) {
-	val := this.Get(key)
+func (g *GeneralConfigGroup) GetBool(key string) (bool, error) {
+	val := g.Get(key)
 	if len(val) > 0 {
 		val = strings.ToLower(val)
 		switch val {
@@ -95,71 +94,71 @@ func (this *GeneralConfigGroup) GetBool(key string) (bool, error) {
 }
 
 //设置一个属性集合
-func (this *GeneralConfigGroup) PutAll(configs map[string]string) {
+func (g *GeneralConfigGroup) PutAll(configs map[string]string) {
 	if configs != nil && len(configs) > 0 {
 		for key, value := range configs {
-			this.Put(key, value)
+			g.Put(key, value)
 		}
 	}
 }
 
-func (this *GeneralConfigGroup) put(key, value string) string {
-	this.lock.Lock()
-	defer this.lock.Unlock()
-	this.configMap[key] = value
+func (g *GeneralConfigGroup) put(key, value string) string {
+	g.lock.Lock()
+	defer g.lock.Unlock()
 
+	g.configMap[key] = value
 	return value
 }
 
 //设置一个属性
-func (this *GeneralConfigGroup) Put(key, value string) string {
+func (g *GeneralConfigGroup) Put(key, value string) string {
 	if len(key) == 0 {
 		return ``
 	}
 
-	preValue := this.Get(key)
+	preValue := g.Get(key)
 
 	if preValue == value {
 		return value
 	}
 
-	value = this.put(key, value)
+	value = g.put(key, value)
 
-	this.notify(key, value)
+	g.notify(key, value)
 
 	return value
 }
 
-func (this *GeneralConfigGroup) size() int {
-	this.lock.RLock()
-	defer this.lock.RUnlock()
-	return len(this.configMap)
+func (g *GeneralConfigGroup) size() int {
+	g.lock.RLock()
+	defer g.lock.RUnlock()
+	return len(g.configMap)
 }
 
-func (this *GeneralConfigGroup) clone() map[string]string {
-	this.lock.RLock()
-	defer this.lock.RUnlock()
-	clone := make(map[string]string, len(this.configMap))
-	for key, value := range this.configMap {
+func (g *GeneralConfigGroup) clone() map[string]string {
+	g.lock.RLock()
+	defer g.lock.RUnlock()
+	clone := make(map[string]string, len(g.configMap))
+	for key, value := range g.configMap {
 		clone[key] = value
 	}
 	return clone
 }
 
 //遍历属性并进行回调
-func (this *GeneralConfigGroup) ForEach(callback func(key, value string)) {
-	for key, value := range this.clone() {
+func (g *GeneralConfigGroup) ForEach(callback func(key, value string)) {
+	for key, value := range g.clone() {
 		callback(key, value)
 	}
 }
 
 //添加属性变化监听器,当此监听器所关心的属性发生变化时,会调用此监听器所定义的回调函数
-func (this *GeneralConfigGroup) AddWatcher(watch IObserver) {
-	this.watchs = append(this.watchs, watch)
+func (g *GeneralConfigGroup) AddWatcher(watch IObserver) {
+	g.watchs = append(g.watchs, watch)
 }
 
-func (this *GeneralConfigGroup) notify(key, value string) {
-	for _, observer := range this.watchs {
+func (g *GeneralConfigGroup) notify(key, value string) {
+	for _, observer := range g.watchs {
 		go func() {
 			observer(key, value)
 		}()

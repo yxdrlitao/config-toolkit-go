@@ -76,8 +76,8 @@ func newFileLocation(location string) *FileLocation {
 }
 
 //
-func (this *FileLocation) selectProtocol() Protocol {
-	switch this.protocol {
+func (f *FileLocation) selectProtocol() Protocol {
+	switch f.protocol {
 	case FILE:
 		protocol, err := NewLocalFileProtocol()
 		if err != nil {

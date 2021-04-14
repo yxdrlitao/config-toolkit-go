@@ -35,7 +35,7 @@ func newConfigLocalCache(localCachePath string) *ConfigLocalCache {
  * @param configNode
  * @param node
  */
-func (this *ConfigLocalCache) saveLocalCache(configNode *ZookeeperConfigGroup, node string) (string, error) {
+func (c *ConfigLocalCache) saveLocalCache(configNode *ZookeeperConfigGroup, node string) (string, error) {
 	properties := &bytes.Buffer{}
 	for key, value := range configNode.exportProperties() {
 		_, err := properties.WriteString(key)
@@ -53,7 +53,7 @@ func (this *ConfigLocalCache) saveLocalCache(configNode *ZookeeperConfigGroup, n
 		}
 	}
 
-	localPath := this.genLocalPath(node)
+	localPath := c.genLocalPath(node)
 	index := strings.LastIndex(localPath, string(os.PathSeparator))
 	os.MkdirAll(localPath[:index], 0644)
 
@@ -65,6 +65,6 @@ func (this *ConfigLocalCache) saveLocalCache(configNode *ZookeeperConfigGroup, n
 	return localPath, nil
 }
 
-func (this *ConfigLocalCache) genLocalPath(node string) string {
-	return this.localCachePath + node + SUFFIX
+func (c *ConfigLocalCache) genLocalPath(node string) string {
+	return c.localCachePath + node + SUFFIX
 }

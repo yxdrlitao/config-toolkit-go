@@ -27,34 +27,34 @@ func NewFileConfigGroup(internalConfigGroup ConfigGroup, configProfile *FileConf
 	return group, nil
 }
 
-func (this *FileConfigGroup) initConfig() error {
-	protocol := this.location.selectProtocol()
+func (g *FileConfigGroup) initConfig() error {
+	protocol := g.location.selectProtocol()
 	if protocol == nil {
-		return fmt.Errorf("can't resolve protocol:%v", this.location)
+		return fmt.Errorf("can't resolve protocol:%v", g.location)
 	}
 
-	this.protocol = protocol
+	g.protocol = protocol
 
-	contentTypeResolve, err := selectContentTypeResolve(this.configProfile.contentType)
+	contentTypeResolve, err := selectContentTypeResolve(g.configProfile.contentType)
 	if err != nil {
-		log.Printf("fileConfigGroup init failed :%v, contentType%s", err, this.configProfile.contentType)
+		log.Printf("fileConfigGroup init failed :%v, contentType%s", err, g.configProfile.contentType)
 		return err
 	}
 
-	data, err := this.protocol.Read(this.location)
+	data, err := g.protocol.Read(g.location)
 	if err != nil {
-		log.Printf("fileConfigGroup init failed :%v, read file error:%s\n", err, this.location.file)
+		log.Printf("fileConfigGroup init failed :%v, read file error:%s\n", err, g.location.file)
 		return err
 	}
 
-	properties, err := contentTypeResolve.resolve(data, this.location.protocol)
+	properties, err := contentTypeResolve.resolve(data, g.location.protocol)
 	if err != nil {
-		log.Printf("fileConfigGroup init failed :%v, contentType%s", err, this.configProfile.contentType)
+		log.Printf("fileConfigGroup init failed :%v, contentType%s", err, g.configProfile.contentType)
 		return err
 	}
 
 	for key, value := range properties {
-		this.Put(key, value)
+		g.Put(key, value)
 	}
 
 	return nil

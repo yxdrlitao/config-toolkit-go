@@ -51,34 +51,34 @@ func NewZookeeperConfigGroupWithCache(configProfile *ZookeeperConfigProfile, nod
 /**
  * 初始化节点
  */
-func (this *ZookeeperConfigGroup) initConfigs() error {
+func (g *ZookeeperConfigGroup) initConfigs() error {
 
 	builder := &curator.CuratorFrameworkBuilder{
 		ConnectionTimeout: 1 * time.Second,
 		SessionTimeout:    1 * time.Second,
-		RetryPolicy:       this.configProfile.RetryPolicy,
+		RetryPolicy:       g.configProfile.RetryPolicy,
 	}
 
-	this.client = builder.ConnectString(this.configProfile.ConnectStr).Build()
+	g.client = builder.ConnectString(g.configProfile.ConnectStr).Build()
 
-	// this is one method of getting event/async notifications
-	err := this.client.Start()
+	// g is one method of getting event/async notifications
+	err := g.client.Start()
 	if err != nil {
 		log.Printf("start zookeeper client error:%v", err)
 		return err
 	}
 
-	this.client.CuratorListenable().AddListener(curator.NewCuratorListener(
+	g.client.CuratorListenable().AddListener(curator.NewCuratorListener(
 		func(client curator.CuratorFramework, event curator.CuratorEvent) error {
 			if event.Type() == curator.WATCHED {
 				someChange := false
 
 				switch event.WatchedEvent().Type {
 				case zk.EventNodeChildrenChanged:
-					this.loadNode()
+					g.loadNode()
 					someChange = true
 				case zk.EventNodeDataChanged:
-					this.reloadKey(event.Path())
+					g.reloadKey(event.Path())
 					someChange = true
 				default:
 
@@ -86,10 +86,10 @@ func (this *ZookeeperConfigGroup) initConfigs() error {
 
 				if someChange {
 					log.Printf("reload properties with %s", event.Path())
-					if this.configLocalCache != nil {
-						_, err = this.configLocalCache.saveLocalCache(this, this.node)
+					if g.configLocalCache != nil {
+						_, err = g.configLocalCache.saveLocalCache(g, g.node)
 						if err != nil {
-							log.Printf("save to local file error:%v %v", this.configLocalCache, err)
+							log.Printf("save to local file error:%v %v", g.configLocalCache, err)
 						}
 					}
 
@@ -99,27 +99,28 @@ func (this *ZookeeperConfigGroup) initConfigs() error {
 			return nil
 		}))
 
-	err = this.loadNode()
+	err = g.loadNode()
 	if err != nil {
-		log.Printf("load node error:%v", err)
+		log.Printf("load node error: %v", err)
 		return err
 	}
 
-	if this.configLocalCache != nil {
-		_, err = this.configLocalCache.saveLocalCache(this, this.node)
+	if g.configLocalCache != nil {
+		_, err = g.configLocalCache.saveLocalCache(g, g.node)
 		if err != nil {
-			log.Printf("save to local file error:%v %v", this.configLocalCache, err)
+			log.Printf("save to local file error: %v %v", g.configLocalCache, err)
 			return err
 		}
 	}
 
 	// Consistency check
-	if this.configProfile.ConsistencyCheck {
+	if g.configProfile.ConsistencyCheck {
 		go func() {
-			time.Sleep(1 * time.Second)
 			for {
-				<-time.After(this.configProfile.ConsistencyCheckRate)
-				this.loadNode()
+				select {
+				case <-time.After(g.configProfile.ConsistencyCheckRate):
+					g.loadNode()
+				}
 			}
 		}()
 	}
@@ -130,9 +131,9 @@ func (this *ZookeeperConfigGroup) initConfigs() error {
 /**
  * 加载节点并监听节点变化
  */
-func (this *ZookeeperConfigGroup) loadNode() error {
-	nodePath := MakePath(this.configProfile.versionedRootNode(), this.node)
-	childrenBuilder := this.client.GetChildren()
+func (g *ZookeeperConfigGroup) loadNode() error {
+	nodePath := MakePath(g.configProfile.versionedRootNode(), g.node)
+	childrenBuilder := g.client.GetChildren()
 	children, err := childrenBuilder.Watched().ForPath(nodePath)
 	if err != nil {
 		return err
@@ -140,7 +141,7 @@ func (this *ZookeeperConfigGroup) loadNode() error {
 
 	configs := make(map[string]string, len(children))
 	for _, item := range children {
-		key, value, err := this.loadKey(MakePath(nodePath, item))
+		key, value, err := g.loadKey(MakePath(nodePath, item))
 		if err != nil {
 			log.Printf("load property error:%s, %v", item, err)
 			return err
@@ -151,24 +152,24 @@ func (this *ZookeeperConfigGroup) loadNode() error {
 		}
 	}
 
-	this.PutAll(configs)
+	g.PutAll(configs)
 	return nil
 }
 
 //重新加载某一子节点
-func (this *ZookeeperConfigGroup) reloadKey(nodePath string) {
-	key, value, _ := this.loadKey(nodePath)
+func (g *ZookeeperConfigGroup) reloadKey(nodePath string) {
+	key, value, _ := g.loadKey(nodePath)
 	if len(key) > 0 {
-		this.Put(key, value)
+		g.Put(key, value)
 	}
 }
 
 //加载某一子节点
-func (this *ZookeeperConfigGroup) loadKey(nodePath string) (string, string, error) {
+func (g *ZookeeperConfigGroup) loadKey(nodePath string) (string, string, error) {
 	nodeName := getNodeFromPath(nodePath)
 
-	keysSpecified := this.configProfile.KeysSpecified
-	switch this.configProfile.KeyLoadingMode {
+	keysSpecified := g.configProfile.KeysSpecified
+	switch g.configProfile.KeyLoadingMode {
 	case KeyLoadingMode_INCLUDE:
 		if keysSpecified == nil || keysSpecified.Contains(nodeName) {
 			return ``, ``, nil
@@ -179,10 +180,9 @@ func (this *ZookeeperConfigGroup) loadKey(nodePath string) (string, string, erro
 		}
 	case KeyLoadingMode_ALL:
 	default:
-
 	}
 
-	data := this.client.GetData()
+	data := g.client.GetData()
 	value, err := data.Watched().ForPath(nodePath)
 	if err != nil {
 		return ``, ``, err
@@ -194,10 +194,10 @@ func (this *ZookeeperConfigGroup) loadKey(nodePath string) (string, string, erro
 /**
  * 导出属性列表
  */
-func (this *ZookeeperConfigGroup) exportProperties() map[string]string {
-	result := make(map[string]string, this.size())
+func (g *ZookeeperConfigGroup) exportProperties() map[string]string {
+	result := make(map[string]string, g.size())
 
-	this.ForEach(func(key, value string) {
+	g.ForEach(func(key, value string) {
 		result[key] = value
 	})
 
